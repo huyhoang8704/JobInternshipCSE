@@ -53,7 +53,7 @@ setInterval(async function () {
     .request(config)
     .then((response) => {
       newdata = response.data.items;
-      if (newdata[newdata.length - 1]._id == prevOldJDID) {
+      if (newdata[newdata.length - 1]._id == prevOldJDID || prevOldJDID == "") {
         return newdata[newdata.length - 1]._id;
       }
       prevOldJDID = newdata[newdata.length - 1]._id;
