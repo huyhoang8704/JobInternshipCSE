@@ -9,7 +9,26 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 require("dotenv").config();
 
+app.use(cors());
+
+// Store all JDs
+let jdIds = [];
+
 app.get("/", function (req, res) {
+  getJDs()
+  .then(jds => res.json({ message: "success", data: jds }))
+  .catch(error => console.log(error));
+});
+
+setInterval(async function () {
+  checkForNewJDs();
+}, 3 * 1000);
+
+http.listen(4000, function () {
+  console.log("listening on port 4000");
+});
+
+async function getJDs() {
   let config = {
     method: "get",
     maxBodyLength: Infinity,
@@ -20,19 +39,29 @@ app.get("/", function (req, res) {
     },
   };
 
-  axios
-    .request(config)
-    .then((response) => {
-      res.json({ message: "success", data: response.data.items });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-});
+  const response = await axios.request(config);
+  return response.data.items;
+}
 
-var prevOldJDID = "";
+async function checkForNewJDs() {
+  const newJDs = await getJDs();
+  if (jdIds.length === 0) {
+    jdIds = newJDs.map(jd => jd._id);
+    console.log("Initial JDs loaded");
+    return;
+  }
+  const newJDIds = newJDs.map(jd => jd._id);
+  
+  newJDIds.forEach(id => {
+    if (!jdIds.includes(id)) {
+      jdIds.push(id);
+      console.log("New JD found:", id);
+      sendEmailNotification(id);
+    }
+  });
+}
 
-setInterval(async function () {
+async function sendEmailNotification(id) {
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     auth: {
@@ -40,89 +69,55 @@ setInterval(async function () {
       pass: "prxb dopf rxak uemh",
     },
   });
+  
   EMAIL = process.env.EMAIL;
-  newdata = [];
 
-  let config = {
+  let config1 = {
     method: "get",
     maxBodyLength: Infinity,
-    url: "https://internship.cse.hcmut.edu.vn/home/company/all",
+    url: `https://internship.cse.hcmut.edu.vn/home/company/id/${id}`,
+    headers: {
+      Host: "internship.cse.hcmut.edu.vn",
+    },
   };
 
-  axios
-    .request(config)
-    .then((response) => {
-      newdata = response.data.items;
-      if (newdata[newdata.length - 1]._id == prevOldJDID || prevOldJDID == "") {
-        return newdata[newdata.length - 1]._id;
-      }
-      prevOldJDID = newdata[newdata.length - 1]._id;
+  const response = await axios.request(config1);
+  const newDataItem = response.data.item;
+  
+  if (newDataItem.description.includes("nhận đủ SV")) {
+    console.log("No new JD");
+    return;
+  }
 
-      let config1 = {
-        method: "get",
-        maxBodyLength: Infinity,
-        url: `https://internship.cse.hcmut.edu.vn/home/company/id/${prevOldJDID}`,
-        headers: {
-          Host: "internship.cse.hcmut.edu.vn",
-        },
-      };
+  const mailOptions = {
+    from: "phdhuy1@gmail.com",
+    to: EMAIL,
+    subject: "New JD from Internship CSE HCMUT",
+    html: `<!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    <title>New JD from Internship CSE HCMUT</title>
+    </head>
+    <body>
+        <h2>Hello, there is a new job from Internship CSE HCMUT:</h2>
+        <h3>Name: ${newDataItem.shortname}</h3>
+        <p>Address: ${newDataItem.address}</p>
+        <p>Internship File: <a href="https://internship.cse.hcmut.edu.vn${newDataItem.internshipFile}">link to JD</a></p>
+        <h3>Description:</h3>
+        <p>${newDataItem.description}</p>
+        <h3>Work:</h3>
+        <p>${newDataItem.work}</p>
+    </body>
+    </html>
+        `,
+  };
 
-      let newDataItem = {};
-
-      axios
-        .request(config1)
-        .then((response) => {
-          newDataItem = response.data.item;
-          if (newDataItem.description.includes("nhận đủ SV")) {
-            console.log("No new JD");
-            return prevOldJDID;
-          }
-
-          const mailOptions = {
-            from: "phdhuy1@gmail.com",
-            to: EMAIL,
-            subject: "New JD from Internship CSE HCMUT",
-            html: `<!DOCTYPE html>
-            <html>
-            <head>
-            <meta charset="UTF-8">
-            <title>New JD from Internship CSE HCMUT</title>
-            </head>
-            <body>
-                <h2>Hello, there is a new job from Internship CSE HCMUT:</h2>
-                <h3>Name: ${newDataItem.shortname}</h3>
-                <p>Address: ${newDataItem.address}</p>
-                <p>Internship File: <a href="https://internship.cse.hcmut.edu.vn${newDataItem.internshipFile}">link to JD</a></p>
-                <h3>Description:</h3>
-                <p>${newDataItem.description}</p>
-                <h3>Work:</h3>
-                <p>${newDataItem.work}</p>
-            </body>
-            </html>
-                `,
-          };
-
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.error("Error sending email:", error);
-            } else {
-              console.log("Email sent:", info.response);
-            }
-          });
-
-          return prevOldJDID;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-}, 30 * 1000);
-
-http.listen(4000, function () {
-  console.log("listening on port 4000");
-});
-
-app.use(cors());
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error("Error sending email:", error);
+    } else {
+      console.log("Email sent:", info.response);
+    }
+  });
+}
