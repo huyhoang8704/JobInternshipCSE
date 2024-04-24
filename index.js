@@ -22,7 +22,7 @@ app.get("/", function (req, res) {
 
 setInterval(async function () {
   checkForNewJDs();
-}, 30 * 1000);
+}, 10 * 60 * 1000);
 
 http.listen(4000, function () {
   console.log("listening on port 4000");
