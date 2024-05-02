@@ -16,8 +16,8 @@ let jdIds = [];
 
 app.get("/", function (req, res) {
   getJDs()
-  .then(jds => res.json({ message: "success", data: jds }))
-  .catch(error => console.log(error));
+    .then((jds) => res.json({ message: "success", data: jds }))
+    .catch((error) => console.log(error));
 });
 
 setInterval(async function () {
@@ -46,13 +46,13 @@ async function getJDs() {
 async function checkForNewJDs() {
   const newJDs = await getJDs();
   if (jdIds.length === 0) {
-    jdIds = newJDs.map(jd => jd._id);
+    jdIds = newJDs.map((jd) => jd._id);
     console.log("Initial JDs loaded");
     return;
   }
-  const newJDIds = newJDs.map(jd => jd._id);
-  
-  newJDIds.forEach(id => {
+  const newJDIds = newJDs.map((jd) => jd._id);
+
+  newJDIds.forEach((id) => {
     if (!jdIds.includes(id)) {
       jdIds.push(id);
       console.log("New JD found:", id);
@@ -69,7 +69,7 @@ async function sendEmailNotification(id) {
       pass: "prxb dopf rxak uemh",
     },
   });
-  
+
   EMAIL = process.env.EMAIL;
 
   let config1 = {
@@ -83,8 +83,12 @@ async function sendEmailNotification(id) {
 
   const response = await axios.request(config1);
   const newDataItem = response.data.item;
-  
-  if (newDataItem.description.includes("nhận đủ SV")) {
+
+  if (
+    newDataItem &&
+    newDataItem.description &&
+    newDataItem.description.includes("nhận đủ SV")
+  ) {
     console.log("No new JD");
     return;
   }
