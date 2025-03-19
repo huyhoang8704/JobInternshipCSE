@@ -22,12 +22,13 @@ app.get("/", function (req, res) {
 
 setInterval(async function () {
   checkForNewJDs();
-}, 10 * 60 * 1000);
+}, 12 * 60 * 60 * 1000);
 
 http.listen(4000, function () {
   console.log("listening on port 4000");
 });
 
+// Get Job Descriptions from the HCMUT website 
 async function getJDs() {
   let config = {
     method: "get",
@@ -43,6 +44,7 @@ async function getJDs() {
   return response.data.items;
 }
 
+// Check for new Job Descriptions
 async function checkForNewJDs() {
   const newJDs = await getJDs();
   if (jdIds.length === 0) {
@@ -65,8 +67,8 @@ async function sendEmailNotification(id) {
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     auth: {
-      user: "phdhuy1@gmail.com",
-      pass: "prxb dopf rxak uemh",
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_PASS,
     },
   });
 
@@ -94,9 +96,9 @@ async function sendEmailNotification(id) {
   }
 
   const mailOptions = {
-    from: "phdhuy1@gmail.com",
+    from: "hoang.nguyenhuyhoang@hcmut.edu.vn",
     to: EMAIL,
-    subject: "New JD from Internship CSE HCMUT",
+    subject: "New Job from Internship CSE HCMUT",
     html: `<!DOCTYPE html>
     <html>
     <head>
