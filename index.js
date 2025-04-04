@@ -12,7 +12,7 @@ require("dotenv").config();
 app.use(cors());
 
 // Store all JDs
-let jdIds = [];
+let jdIds = [0];
 
 app.get("/", function (req, res) {
   getJDs()
