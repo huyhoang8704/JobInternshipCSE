@@ -96,8 +96,8 @@ async function sendEmailNotification(id) {
   }
 
   const mailOptions = {
-    from: "hoang.nguyenhuyhoang@hcmut.edu.vn",
-    to: EMAIL,
+    from: "phdhuy1@gmail.com",
+    to: "huyhoang8704@gmail.com",
     subject: "New Job from Internship CSE HCMUT",
     html: `<!DOCTYPE html>
     <html>
