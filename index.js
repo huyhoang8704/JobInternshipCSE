@@ -25,7 +25,7 @@ setInterval(async function () {
 }, 12 * 60 * 60 * 1000);
 
 http.listen(4000, function () {
-  console.log("listening on port 4000");
+  console.log("listening on port 4000 ");
 });
 
 // Get Job Descriptions from the HCMUT website 
