@@ -67,8 +67,8 @@ async function sendEmailNotification(id) {
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     auth: {
-      user: "phdhuy1@gmail.com",
-      pass: "prxb dopf rxak uemh",
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_PASS,
     },
   });
 
@@ -96,8 +96,8 @@ async function sendEmailNotification(id) {
   }
 
   const mailOptions = {
-    from: "phdhuy1@gmail.com",
-    to: "huyhoang8704@gmail.com",
+    from: process.env.GMAIL_USER,
+    to: EMAIL,
     subject: "New Job from Internship CSE HCMUT",
     html: `<!DOCTYPE html>
     <html>
