@@ -22,7 +22,7 @@ app.get("/", function (req, res) {
 
 setInterval(async function () {
   checkForNewJDs();
-},60 * 60 * 1000);
+}, 1000);
 
 http.listen(4000, function () {
   console.log("listening on port 4000 ");
@@ -41,6 +41,7 @@ async function getJDs() {
   };
 
   const response = await axios.request(config);
+  // console.log(response.data.item.internshipFiles[0].path)
   return response.data.items;
 }
 
@@ -85,6 +86,7 @@ async function sendEmailNotification(id) {
 
   const response = await axios.request(config1);
   const newDataItem = response.data.item;
+  console.log(newDataItem)
 
   if (
     newDataItem &&
@@ -107,9 +109,9 @@ async function sendEmailNotification(id) {
     </head>
     <body>
         <h2>Hello, there is a new job from Internship CSE HCMUT:</h2>
-        <h3>Name: ${newDataItem.shortname}</h3>
+        <h3>Name: ${newDataItem.fullname}</h3>
         <p>Address: ${newDataItem.address}</p>
-        <p>Internship File: <a href="https://internship.cse.hcmut.edu.vn${newDataItem.internshipFile}">link to JD</a></p>
+        <p>Internship File: <a href="https://internship.cse.hcmut.edu.vn${newDataItem.internshipFiles[0].path}">link to JD</a></p>
         <h3>Description:</h3>
         <p>${newDataItem.description}</p>
         <h3>Work:</h3>
