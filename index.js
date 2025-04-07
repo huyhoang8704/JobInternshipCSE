@@ -12,7 +12,7 @@ require("dotenv").config();
 app.use(cors());
 
 // Store all JDs
-let jdIds = [0];
+let jdIds = [];
 
 app.get("/", function (req, res) {
   getJDs()
@@ -88,14 +88,14 @@ async function sendEmailNotification(id) {
   const newDataItem = response.data.item;
   console.log(newDataItem)
 
-  if (
-    newDataItem &&
-    newDataItem.description &&
-    newDataItem.description.includes("nhận đủ SV")
-  ) {
-    console.log("No new JD");
-    return;
-  }
+  // if (
+  //   newDataItem &&
+  //   newDataItem.description &&
+  //   newDataItem.description.includes("nhận đủ SV")
+  // ) {
+  //   console.log("No new JD");
+  //   return;
+  // }
 
   const mailOptions = {
     from: process.env.GMAIL_USER,
