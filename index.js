@@ -14,6 +14,7 @@ app.use(cors());
 // Store all JDs
 let jdIds = [];
 
+
 app.get("/", function (req, res) {
   getJDs()
     .then((jds) => res.json({ message: "success", data: jds }))
@@ -50,7 +51,8 @@ async function checkForNewJDs() {
   const newJDs = await getJDs();
   if (jdIds.length === 0) {
     jdIds = newJDs.map((jd) => jd._id);
-    console.log("Initial JDs loaded");
+    console.log("Initial JDs loaded:", jdIds);
+    console.log("JD count:", jdIds.length);
     return;
   }
   const newJDIds = newJDs.map((jd) => jd._id);
