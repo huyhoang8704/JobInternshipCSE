@@ -12,7 +12,7 @@ require("dotenv").config();
 app.use(cors());
 
 // Store all JDs
-let jdIds = [];
+let jdIds = [0];
 
 app.get("/", function (req, res) {
   getJDs()
@@ -22,7 +22,7 @@ app.get("/", function (req, res) {
 
 setInterval(async function () {
   checkForNewJDs();
-}, 3 * 60 * 60 * 1000);
+}, 1000);
 
 http.listen(4000, function () {
   console.log("listening on port 4000 ");
