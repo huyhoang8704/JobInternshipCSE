@@ -4,6 +4,9 @@ const http = require("http").createServer(app);
 const cors = require("cors");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
+const { emails } = require("./data/emails");
+const { saveJDsToFile, loadJDsFromFile } = require("./utils/FileIO");
+const { createMailOption } = require("./utils/MailOption");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -21,12 +24,15 @@ app.get("/", function (req, res) {
     .catch((error) => console.log(error));
 });
 
-setInterval(async function () {
-  checkForNewJDs();
-}, 1000);
 
 http.listen(4000, function () {
   console.log("listening on port 4000 ");
+  jdIds = loadJDsFromFile();
+  setInterval(async function () {
+    console.log("Checking for new JDs...");
+    await checkForNewJDs();
+  }, 10000);
+
 });
 
 // Get Job Descriptions from the HCMUT website 
@@ -49,33 +55,36 @@ async function getJDs() {
 // Check for new Job Descriptions
 async function checkForNewJDs() {
   const newJDs = await getJDs();
-  if (jdIds.length === 0) {
-    jdIds = newJDs.map((jd) => jd._id);
-    console.log("Initial JDs loaded:", jdIds);
-    console.log("JD count:", jdIds.length);
-    return;
-  }
   const newJDIds = newJDs.map((jd) => jd._id);
-
+  const promises = []
   newJDIds.forEach((id) => {
     if (!jdIds.includes(id)) {
       jdIds.push(id);
       console.log("New JD found:", id);
-      sendEmailNotification(id);
+      promises.push(sendEmailNotification(id));
     }
   });
+  await Promise.all(promises);
+  saveJDsToFile(jdIds)
 }
 
 async function sendEmailNotification(id) {
-  const transporter = nodemailer.createTransport({
+  console.log({
     service: "Gmail",
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_PASS,
+    },
+  })
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_PASS,
     },
   });
 
-  EMAIL = process.env.EMAIL;
 
   let config1 = {
     method: "get",
@@ -88,46 +97,16 @@ async function sendEmailNotification(id) {
 
   const response = await axios.request(config1);
   const newDataItem = response.data.item;
-  console.log(newDataItem)
-
-  // if (
-  //   newDataItem &&
-  //   newDataItem.description &&
-  //   newDataItem.description.includes("nhận đủ SV")
-  // ) {
-  //   console.log("No new JD");
-  //   return;
-  // }
-
-  const mailOptions = {
-    from: process.env.GMAIL_USER,
-    to: EMAIL,
-    subject: "New Job from Internship CSE HCMUT",
-    html: `<!DOCTYPE html>
-    <html>
-    <head>
-    <meta charset="UTF-8">
-    <title>New JD from Internship CSE HCMUT</title>
-    </head>
-    <body>
-        <h2>Hello, there is a new job from Internship CSE HCMUT:</h2>
-        <h3>Name: ${newDataItem.fullname}</h3>
-        <p>Address: ${newDataItem.address}</p>
-        <p>Internship File: <a href="https://internship.cse.hcmut.edu.vn${newDataItem.internshipFiles[0].path}">link to JD</a></p>
-        <h3>Description:</h3>
-        <p>${newDataItem.description}</p>
-        <h3>Work:</h3>
-        <p>${newDataItem.work}</p>
-    </body>
-    </html>
-        `,
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
+  for (const email of emails) {
+    console.log("Sending email to:", email);
+    try {
+      const result = await transporter.sendMail(createMailOption(email, newDataItem));
+      console.log("Email sent:", result.response);
+    } catch (error) {
       console.error("Error sending email:", error);
-    } else {
-      console.log("Email sent:", info.response);
     }
-  });
+  }
 }
+
+
+
